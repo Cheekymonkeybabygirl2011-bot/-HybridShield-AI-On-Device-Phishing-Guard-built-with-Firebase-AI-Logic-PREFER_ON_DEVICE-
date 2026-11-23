@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HybridShield AI — On-Device Phishing Guard</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body {
+      margin: 0;
+      background: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 720px;
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .badge-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .badge {
+      background: #0284c7;
+      color: #fff;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge.hybrid { background: #7c3aed; }
+    h1 { margin: 0 0 0.5rem; font-size: 1.75rem; }
+    p.subtitle { color: #94a3b8; margin: 0 0 1.5rem; line-height: 1.5; }
+    .presets { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.1rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    .btn-preset { background: #334155; color: #e2e8f0; font-size: 0.85rem; }
+    .btn-primary { background: #38bdf8; color: #0f172a; }
+    .btn-cloud { background: #a855f7; color: #fff; }
+    textarea {
+      width: 100%;
+      height: 130px;
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 1rem;
+      resize: vertical;
+      margin-bottom: 1rem;
+    }
+    .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .result-box {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      border-radius: 12px;
+      background: #0f172a;
+      border-left: 5px solid #38bdf8;
+      display: none;
+    }
+    .result-box.danger { border-left-color: #ef4444; }
+    .result-box.safe { border-left-color: #22c55e; }
+    .meta { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.5rem; }
+    .output-text { line-height: 1.6; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge-row">
+      <span class="badge hybrid">Firebase AI Logic (#BuildHybridAI 2026)</span>
+      <span class="badge" id="engineStatus">Engine: Hybrid (On-Device First)</span>
+    </div>
+    <h1>🛡️ HybridShield AI</h1>
+    <p class="subtitle">
+      Privacy-first cybersecurity scanner. Analyzes suspicious DMs, texts, and links <strong>on-device first</strong> so your private messages stay on your computer, escalating to <strong>Firebase AI Logic (Cloud)</strong> only when deeper threat intelligence is needed.
+    </p>
+
+    <div class="presets">
+      <button class="btn-preset" id="presetSafe">Test Safe Message</button>
+      <button class="btn-preset" id="presetPhish">Test Phishing DM</button>
+      <button class="btn-preset" id="presetUrl">Test Suspicious Link</button>
+    </div>
+
+    <textarea id="messageInput" placeholder="Paste a suspicious message, DM, or URL here to scan..."></textarea>
+
+    <div class="actions">
+      <button class="btn-primary" id="scanBtn">⚡ Hybrid Scan (On-Device First)</button>
+      <button class="btn-cloud" id="cloudBtn">☁️ Deep Cloud Scan (Firebase AI Logic)</button>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <div class="meta" id="resultMeta"></div>
+      <div class="output-text" id="resultText"></div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
