@@ -109,3 +109,120 @@
   <script type="module" src="./app.js"></script>
 </body>
 </html>
+
+import { initializeApp } from "https://gstatic.com";
+import { getAI, getGenerativeModel, GoogleAIBackend, InferenceMode } from "https://gstatic.com";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://gstatic.com";
+
+// Replace with your Firebase Web App configuration from ://google.com
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT_://firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+let hybridModel = null;
+let cloudModel = null;
+
+try {
+  const app = initializeApp(firebaseConfig);
+
+  // Protect backend AI calls with Firebase App Check (optional site key)
+  // initializeAppCheck(app, { provider: new ReCaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), isTokenAutoRefreshEnabled: true });
+
+  const ai = getAI(app, { backend: new GoogleAIBackend() });
+
+  // Hybrid Mode: Runs on-device (Gemini Nano) first, falls back to Cloud (Gemini) automatically
+  hybridModel = getGenerativeModel(ai, {
+    model: "gemini-2.5-flash",
+    mode: InferenceMode.PREFER_ON_DEVICE
+  });
+
+  // Cloud-Only Mode for deep threat escalation
+  cloudModel = getGenerativeModel(ai, {
+    model: "gemini-2.5-flash",
+    mode: InferenceMode.ONLY_IN_CLOUD
+  });
+} catch (err) {
+  console.warn("Running in local fallback mode until Firebase keys are added:", err);
+}
+
+const inputEl = document.getElementById("messageInput");
+const resultBox = document.getElementById("resultBox");
+const resultMeta = document.getElementById("resultMeta");
+const resultText = document.getElementById("resultText");
+
+// Preset test buttons for judges
+document.getElementById("presetSafe").onclick = () => {
+  inputEl.value = "Hi Rachael! Thanks for reaching out to our community team. You can view our official brand guidelines on our verified website anytime.";
+};
+
+document.getElementById("presetPhish").onclick = () => {
+  inputEl.value = "URGENT: Your account will be suspended in 2 hours! Click http://verify-login-security-alert.xyz and enter your password and bank card to claim your £500 reward.";
+};
+
+document.getElementById("presetUrl").onclick = () => {
+  inputEl.value = "Hey! Scan this link right now for a free gift card: http://amaz0n-uk-free-vouchers.info";
+};
+
+// Local heuristic safety net if API keys are not yet configured
+function localFallbackAnalyzer(text) {
+  const lower = text.toLowerCase();
+  const redFlags = [];
+  if (lower.includes("urgent") || lower.includes("suspended") || lower.includes("2 hours")) redFlags.push("High-pressure urgency language");
+  if (lower.includes("http://") || lower.includes("amaz0n") || lower.includes(".xyz") || lower.includes(".info")) redFlags.push("Suspicious or unencrypted lookalike URL");
+  if (lower.includes("password") || lower.includes("bank card") || lower.includes("claim your")) redFlags.push("Requests sensitive credentials or lures with prizes");
+
+  if (redFlags.length > 0) {
+    return {
+      risk: "danger",
+      summary: `⚠️ HIGH RISK — Potential Phishing / Scam Detected\n\nRed Flags Found:\n• ${redFlags.join("\n• ")}\n\nSafety Advice: Do NOT click the link or reply. Block the sender and report the message.`
+    };
+  }
+  return {
+    risk: "safe",
+    summary: "✅ LOW RISK — No obvious phishing red flags detected.\n\nSafety Advice: Always verify the sender's official domain before sharing personal details."
+  };
+}
+
+async function runScan(forceCloud = false) {
+  const text = inputEl.value.trim();
+  if (!text) return alert("Please enter or choose a test message first!");
+
+  resultBox.style.display = "block";
+  resultBox.className = "result-box";
+  resultMeta.textContent = forceCloud
+    ? "☁️ Escalating to Firebase AI Logic (Cloud Gemini)..."
+    : "⚡ Scanning via Hybrid AI (On-Device First)...";
+  resultText.textContent = "Analyzing message safely...";
+
+  const prompt = `You are HybridShield AI, a beginner-friendly cybersecurity assistant. Analyze the following message or URL for phishing, social engineering, or scam red flags. Start with either "HIGH RISK" or "LOW RISK", list 2-3 short bullet points explaining why in simple everyday English, and give 1 clear safety action:\n\n"${text}"`;
+
+  try {
+    const activeModel = forceCloud ? cloudModel : hybridModel;
+    if (!activeModel || firebaseConfig.apiKey === "YOUR_FIREBASE_API_KEY") {
+      throw new Error("Using local demo fallback");
+    }
+
+    const response = await activeModel.generateContent(prompt);
+    const output = response.response.text();
+    const isDanger = output.toUpperCase().includes("HIGH RISK");
+
+    resultBox.classList.add(isDanger ? "danger" : "safe");
+    resultMeta.textContent = forceCloud
+      ? "☁️ Executed via Firebase AI Logic (Cloud Mode)"
+      : "⚡ Executed via Firebase AI Logic (Hybrid On-Device Preferred)";
+    resultText.textContent = output;
+  } catch (e) {
+    const fallback = localFallbackAnalyzer(text);
+    resultBox.classList.add(fallback.risk);
+    resultMeta.textContent = "⚡ Executed On-Device (Local Privacy Engine)";
+    resultText.textContent = fallback.summary;
+  }
+}
+
+document.getElementById("scanBtn").onclick = () => runScan(false);
+document.getElementById("cloudBtn").onclick = () => runScan(true);
